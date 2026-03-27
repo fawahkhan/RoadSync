@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { api } from '../lib/supabase';
 
 export default function TrackEmissions() {
   const [step, setStep] = useState(1);
@@ -26,14 +25,11 @@ export default function TrackEmissions() {
     e.preventDefault();
     try {
       setLoading(true);
-      await api.saveEmissionData(
-        formData.fuelType,
-        parseFloat(formData.distance),
-        parseFloat(formData.mileage)
-      );
-      // Mock result for demonstration
+      // Mock result for demonstration - replace with your actual API call
+      // Calculate mock CO2 emissions
+      const mockCO2 = Math.round(parseFloat(formData.distance) * 0.12);
       setResult({
-        co2Emitted: 987,
+        co2Emitted: mockCO2,
         gemsEarned: 45,
         percentile: 85,
       });
