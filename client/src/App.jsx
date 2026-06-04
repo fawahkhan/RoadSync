@@ -15,6 +15,7 @@ import Profile from './pages/Profile';
 import RoutesPage from './pages/Routes';
 import Utilities from './pages/Utilities';
 import About from './pages/About';
+import ChatBot from './pages/ChatBot';
 
 function App() {
   return (
@@ -40,7 +41,8 @@ function App() {
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/routes" element={<RoutesPage />} />
                         <Route path="/utilities" element={<Utilities />} />
-                         <Route path="/about" element={<About />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/chat" element={<ChatBot />} />
                       </Routes>
                     </div>
                     <Footer/>
