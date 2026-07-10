@@ -1,134 +1,104 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Navigation2 } from 'lucide-react';
+import { authAPI } from '../lib/api';
+import { Navigation2, ArrowRight, Loader2 } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const { signIn } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
-
+    setIsLoading(true);
     try {
-      let result;
       if (isLogin) {
-        result = await signIn(email, password);
+        await signIn(formData.email, formData.password);
       } else {
-        if (!name.trim()) {
-          setError('Name is required');
-          setLoading(false);
-          return;
-        }
-        result = await signUp(name, email, password);
+        const res = await authAPI.register(formData);
+        localStorage.setItem('token', res.data.token);
+        await signIn(formData.email, formData.password);
       }
-
-      if (result.error) {
-        setError(result.error);
-      } else {
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      setError('Something went wrong. Please try again.');
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.response?.data?.message || 'An error occurred. Please try again.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#E8FFE8] flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full">
-        <div className="flex items-center gap-2 justify-center mb-8">
-          <Navigation2 className="text-blue-600" size={32} />
-          <span className="text-xl font-bold text-blue-600">RoadSync</span>
-        </div>
-
-        <h2 className="text-2xl font-bold text-center mb-6">
-          {isLogin ? 'Welcome Back!' : 'Create an Account'}
-        </h2>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/20 blur-[120px] rounded-full pointer-events-none" />
+      
+      <Card className="w-full max-w-md bg-card/60 backdrop-blur-2xl border-border/50 shadow-2xl relative z-10 overflow-hidden">
+        <div className="h-2 w-full bg-gradient-to-r from-primary to-blue-500" />
+        <CardHeader className="text-center pt-8">
+          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4 border border-primary/20 shadow-[0_0_20px_rgba(var(--primary),0.2)]">
+            <Navigation2 className="w-6 h-6 text-primary" />
           </div>
-        )}
+          <CardTitle className="text-2xl">{isLogin ? 'Welcome back' : 'Create an account'}</CardTitle>
+          <CardDescription>
+            {isLogin ? 'Enter your credentials to continue to RoadSync.' : 'Join the intelligent city network today.'}
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent>
+          <AnimatePresence mode="wait">
+            {error && (
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full p-2 border rounded-md"
-                placeholder="Enter your name"
-                required={!isLogin}
-              />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <AnimatePresence mode="popLayout">
+              {!isLogin && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
+                  <Label>Full Name</Label>
+                  <Input required placeholder="John Doe" className="bg-secondary/50" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input type="email" required placeholder="name@example.com" className="bg-secondary/50" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
             </div>
-          )}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Password</Label>
+                {isLogin && <a href="#" className="text-xs text-primary hover:underline">Forgot password?</a>}
+              </div>
+              <Input type="password" required className="bg-secondary/50" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border rounded-md"
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2 border rounded-md"
-              placeholder="Enter your password"
-              required
-              minLength={6}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-300"
-          >
-            {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Sign Up')}
-          </button>
-        </form>
-
-        <p className="text-center mt-4 text-sm text-gray-600">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
-          <button
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError('');
-            }}
-            className="text-blue-600 hover:underline"
-          >
-            {isLogin ? 'Sign Up' : 'Sign In'}
-          </button>
-        </p>
-      </div>
+            <Button className="w-full h-11 text-base mt-2" type="submit" disabled={isLoading}>
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isLogin ? 'Sign In' : 'Create Account'}
+            </Button>
+          </form>
+        </CardContent>
+        
+        <CardFooter className="justify-center border-t border-border/50 bg-secondary/20 pt-6">
+          <p className="text-sm text-muted-foreground">
+            {isLogin ? "Don't have an account? " : "Already have an account? "}
+            <button onClick={() => { setIsLogin(!isLogin); setError(''); }} className="text-primary hover:underline font-medium">
+              {isLogin ? 'Sign up' : 'Sign in'}
+            </button>
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

@@ -1,200 +1,92 @@
-import { useState } from 'react';
-import { Upload, CheckCircle } from 'lucide-react';
-import { crimesAPI } from '../lib/api';
-import { useAuth } from '../contexts/AuthContext';
+import { ShieldAlert, AlertTriangle, Check, MapPin, Camera } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function ReportCrime() {
-  const { refreshUser } = useAuth();
-  const [formData, setFormData] = useState({
-    name: '',
-    time: '',
-    reportType: 'emergency',
-    location: '',
-    date: '',
-    description: '',
-  });
-  const [files, setFiles] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    try {
-      const data = new FormData();
-      data.append('type', formData.reportType);
-      data.append('description', formData.description);
-      data.append('location', formData.location);
-      data.append('incidentDate', formData.date || new Date().toISOString());
-      data.append('incidentTime', formData.time);
-
-      // Append files
-      files.forEach(file => {
-        data.append('attachments', file);
-      });
-
-      await crimesAPI.report(data);
-      setSuccess(true);
-      await refreshUser();
-
-      // Reset form after 3 seconds
-      setTimeout(() => {
-        setSuccess(false);
-        setFormData({
-          name: '',
-          time: '',
-          reportType: 'emergency',
-          location: '',
-          date: '',
-          description: '',
-        });
-        setFiles([]);
-      }, 3000);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit report. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (success) {
-    return (
-      <div className="p-8 flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <CheckCircle className="text-green-500 mx-auto mb-4" size={64} />
-          <h2 className="text-2xl font-bold text-green-600 mb-2">Report Submitted!</h2>
-          <p className="text-gray-600 mb-2">Your report has been received and is under review.</p>
-          <p className="text-green-500 font-semibold">💎 +15 Gems Earned</p>
+  return (
+    <div className="p-4 md:p-8 max-w-3xl mx-auto w-full">
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight mb-2 text-rose-500 flex items-center gap-3">
+            <ShieldAlert size={28} /> Emergency Reporting
+          </h1>
+          <p className="text-muted-foreground">Submit anonymous reports to local authorities immediately.</p>
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-blue-700 mb-2">
-        Report Emergencies/Crime
-      </h1>
-      <p className="text-gray-600 mb-8">
-        Report about any kind of emergencies or crime you have come across.
-      </p>
-
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Report Type
-            </label>
-            <select
-              className="w-full p-2 border rounded-md bg-[#E8FFE8]"
-              value={formData.reportType}
-              onChange={(e) => setFormData({...formData, reportType: e.target.value})}
-              required
-            >
-              <option value="emergency">Emergency Situation</option>
-              <option value="accident">Accident</option>
-              <option value="theft">Theft</option>
-              <option value="assault">Assault</option>
-              <option value="traffic_violation">Traffic Violation</option>
-              <option value="other">Other</option>
-            </select>
+      <Card className="bg-card/50 backdrop-blur-sm border-rose-500/20 shadow-[0_0_30px_rgba(244,63,94,0.05)] overflow-hidden">
+        <div className="h-2 w-full bg-gradient-to-r from-rose-500 to-orange-500" />
+        <CardHeader>
+          <CardTitle>Incident Details</CardTitle>
+          <CardDescription>All reports are encrypted and sent to dispatch.</CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Incident Type</Label>
+              <Select>
+                <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select category" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="accident">Traffic Accident</SelectItem>
+                  <SelectItem value="hazard">Road Hazard</SelectItem>
+                  <SelectItem value="suspicious">Suspicious Activity</SelectItem>
+                  <SelectItem value="medical">Medical Emergency</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Severity Level</Label>
+              <Select>
+                <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select severity" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low (Non-urgent)</SelectItem>
+                  <SelectItem value="medium">Medium (Needs attention)</SelectItem>
+                  <SelectItem value="high">High (Immediate Danger)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Time
-            </label>
-            <input
-              type="time"
-              className="w-full p-2 border rounded-md"
-              value={formData.time}
-              onChange={(e) => setFormData({...formData, time: e.target.value})}
-            />
+          <div className="space-y-2">
+            <Label>Location</Label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Pinpoint address or intersection" className="pl-9 bg-secondary/50" />
+              <Button variant="ghost" size="sm" className="absolute right-1 top-1 h-7 text-xs text-primary">Use GPS</Button>
+            </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Location
-            </label>
-            <input
-              type="text"
-              className="w-full p-2 border rounded-md"
-              placeholder="Enter location"
-              value={formData.location}
-              onChange={(e) => setFormData({...formData, location: e.target.value})}
-              required
+          <div className="space-y-2">
+            <Label>Description</Label>
+            <Textarea 
+              placeholder="Provide any helpful details, vehicle descriptions, or context..." 
+              className="min-h-[120px] bg-secondary/50 resize-none" 
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date
-            </label>
-            <input
-              type="date"
-              className="w-full p-2 border rounded-md"
-              value={formData.date}
-              onChange={(e) => setFormData({...formData, date: e.target.value})}
-            />
+          <div className="space-y-2">
+            <Label>Media Evidence</Label>
+            <div className="border-2 border-dashed border-border/50 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-secondary/20 transition-colors cursor-pointer">
+              <Camera className="w-8 h-8 text-muted-foreground mb-3" />
+              <p className="text-sm font-medium">Click to upload photos or videos</p>
+              <p className="text-xs text-muted-foreground mt-1">Maximum file size 50MB</p>
+            </div>
           </div>
-        </div>
+        </CardContent>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Description
-          </label>
-          <textarea
-            className="w-full p-2 border rounded-md h-32"
-            placeholder="Describe the emergency or crime in detail..."
-            value={formData.description}
-            onChange={(e) => setFormData({...formData, description: e.target.value})}
-            required
-            maxLength={2000}
-          />
-          <p className="text-xs text-gray-400 mt-1">{formData.description.length}/2000</p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Attachments (optional)
-          </label>
-          <div className="border-2 border-dashed rounded-md p-8 text-center">
-            <Upload className="mx-auto mb-2 text-gray-400" />
-            <p className="text-sm text-gray-500 mb-2">Upload photos or documents</p>
-            <input
-              type="file"
-              multiple
-              accept="image/*,.pdf"
-              onChange={(e) => setFiles([...e.target.files])}
-              className="text-sm"
-            />
-            {files.length > 0 && (
-              <p className="text-xs text-green-600 mt-2">
-                {files.length} file(s) selected
-              </p>
-            )}
+        <CardFooter className="bg-secondary/20 border-t border-border/50 flex flex-col sm:flex-row gap-4 p-6">
+          <div className="flex items-start gap-3 flex-1 text-xs text-muted-foreground">
+            <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+            <p>Misuse of emergency reporting systems is a crime. False reports may lead to suspension.</p>
           </div>
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-300"
-        >
-          {loading ? 'Submitting...' : 'Submit Report'}
-        </button>
-      </form>
+          <Button variant="destructive" className="w-full sm:w-auto font-semibold">Submit Report</Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

@@ -1,133 +1,77 @@
-import { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { emissionsAPI, usersAPI } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
+import { ShieldAlert, Car, Leaf, TrendingUp } from 'lucide-react';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [chartData, setChartData] = useState([]);
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [stats, setStats] = useState({ totalTrips: 0, totalCO2: 0, avgCO2PerTrip: 0 });
-  const [loading, setLoading] = useState(true);
+  const mockData = [
+    { name: 'Mon', emissions: 12 }, { name: 'Tue', emissions: 19 }, { name: 'Wed', emissions: 15 },
+    { name: 'Thu', emissions: 22 }, { name: 'Fri', emissions: 18 }, { name: 'Sat', emissions: 28 }, { name: 'Sun', emissions: 24 }
+  ];
 
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        const [emissionRes, leaderboardRes] = await Promise.all([
-          emissionsAPI.getSummary(),
-          usersAPI.getLeaderboard(),
-        ]);
-
-        setChartData(emissionRes.data.monthly || []);
-        setStats(emissionRes.data.stats || { totalTrips: 0, totalCO2: 0, avgCO2PerTrip: 0 });
-        setLeaderboard(leaderboardRes.data.leaderboard || []);
-      } catch (err) {
-        console.error('Dashboard load error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadDashboardData();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="p-8 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+  const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
 
   return (
-    <div className="p-8">
-      {/* Welcome */}
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">
-        Welcome back, {user?.name || 'User'} 👋
-      </h1>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome back, {user?.name || 'Citizen'}</h1>
+        <p className="text-muted-foreground">Here is what's happening in your city today.</p>
+      </motion.div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <p className="text-sm text-gray-500">Total Trips</p>
-          <p className="text-3xl font-bold text-blue-600">{stats.totalTrips}</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <p className="text-sm text-gray-500">Total CO₂ Emitted</p>
-          <p className="text-3xl font-bold text-orange-500">{(stats.totalCO2 / 1000).toFixed(1)} kg</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <p className="text-sm text-gray-500">Your Gems</p>
-          <p className="text-3xl font-bold text-purple-600">💎 {user?.gems || 0}</p>
-        </div>
-      </div>
+      <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {[
+          { title: 'CO₂ Saved', val: '42 kg', icon: Leaf, col: 'text-emerald-500' },
+          { title: 'Parking Booked', val: '12', icon: Car, col: 'text-blue-500' },
+          { title: 'Incidents Reported', val: '3', icon: ShieldAlert, col: 'text-rose-500' },
+          { title: 'Global Rank', val: '#4,291', icon: TrendingUp, col: 'text-amber-500' }
+        ].map((stat, i) => (
+          <motion.div variants={item} key={i}>
+            <Card className="bg-card/50 backdrop-blur-sm border-border/50 hover:bg-card hover:shadow-md transition-all">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
+                <stat.icon className={`w-4 h-4 ${stat.col}`} />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.val}</div>
+                <p className="text-xs text-muted-foreground mt-1">+12% from last month</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </motion.div>
 
-      {/* Emission Chart */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Emission Track</h2>
-        <div className="bg-white p-4 rounded-lg shadow">
-          {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="label" />
-                <YAxis />
-                <Tooltip
-                  formatter={(value) => [`${value}g CO₂`, 'Total Emissions']}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="totalCO2"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  dot={{ fill: '#3b82f6' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-400">
-              <div className="text-center">
-                <p className="text-4xl mb-2">📊</p>
-                <p>No emission data yet. Track your first trip!</p>
-              </div>
+      <motion.div variants={item} initial="hidden" animate="show">
+        <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+          <CardHeader>
+            <CardTitle className="text-lg">Weekly Emissions Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[350px] w-full mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={mockData}>
+                  <defs>
+                    <linearGradient id="colorEmissions" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}} dx={-10} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '8px', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+                    itemStyle={{ color: 'hsl(var(--primary))' }}
+                  />
+                  <Area type="monotone" dataKey="emissions" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorEmissions)" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Leaderboard */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Leaderboard</h2>
-        <div className="space-y-4">
-          {leaderboard.length > 0 ? (
-            leaderboard.map((entry) => (
-              <div key={entry.id} className="bg-white p-4 rounded-lg shadow flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
-                    entry.rank === 1 ? 'bg-yellow-400' :
-                    entry.rank === 2 ? 'bg-gray-400' :
-                    entry.rank === 3 ? 'bg-amber-600' : 'bg-blue-400'
-                  }`}>
-                    {entry.rank}
-                  </div>
-                  <span className="font-medium">{entry.name}</span>
-                  {entry.id === user?.id && (
-                    <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">You</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-blue-500">💎 {entry.gems} Gems</span>
-                  <span className="text-orange-500">🏆 {entry.badgeCount} Badges</span>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="bg-white p-8 rounded-lg shadow text-center text-gray-400">
-              <p className="text-4xl mb-2">🏆</p>
-              <p>No leaderboard data yet. Be the first!</p>
-            </div>
-          )}
-        </div>
-      </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }

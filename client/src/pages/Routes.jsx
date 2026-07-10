@@ -1,137 +1,72 @@
 import { useState } from 'react';
-import { GoogleMap, LoadScript, Marker, DirectionsService, DirectionsRenderer } from '@react-google-maps/api';
+import { MapPin, Navigation, TrafficCone } from 'lucide-react';
+import { GoogleMap, useLoadScript, DirectionsRenderer, TrafficLayer } from '@react-google-maps/api';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+const libraries = ['places'];
+const mapContainerStyle = { width: '100%', height: '100%', borderRadius: 'var(--radius)' };
+const center = { lat: 28.6139, lng: 77.2090 };
 
-const containerStyle = {
-  width: '100%',
-  height: '400px'
-};
-
-const center = {
-  lat: 40.7128,
-  lng: -74.0060
-};
-
-function Routes() {
-  const [origin, setOrigin] = useState('');
-  const [destination, setDestination] = useState('');
+export default function RoutesPage() {
+  const { isLoaded, loadError } = useLoadScript({ googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY, libraries });
   const [directions, setDirections] = useState(null);
-  
-  const transportModes = [
-    { id: 'car', icon: '🚗', mode: 'DRIVING' },
-    { id: 'motorcycle', icon: '🏍', mode: 'DRIVING' },
-    { id: 'bus', icon: '🚌', mode: 'TRANSIT' },
-    { id: 'walk', icon: '🚶', mode: 'WALKING' },
-    { id: 'bicycle', icon: '🚲', mode: 'BICYCLING' }
-  ];
+  const [showTraffic, setShowTraffic] = useState(true);
 
-  const [selectedMode, setSelectedMode] = useState(transportModes[0]);
-
-  const calculateRoute = () => {
-    if (!origin || !destination) return;
-
-    const directionsService = new window.google.maps.DirectionsService();
-
-    directionsService.route(
-      {
-        origin,
-        destination,
-        travelMode: selectedMode.mode
-      },
-      (result, status) => {
-        if (status === 'OK') {
-          setDirections(result);
-        } else {
-          alert("Unable to fetch directions. Please check your input.");
-        }
-      }
-    );
-  };
+  if (loadError) return <div className="p-8 max-w-6xl mx-auto w-full text-destructive">Error loading maps. Check API Key.</div>;
+  if (!isLoaded) return <div className="p-8 max-w-6xl mx-auto w-full text-muted-foreground animate-pulse">Loading Map Environment...</div>;
 
   return (
-    <div className="flex-1 p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Routes</h1>
-        <div className="flex gap-4">
-          <button className="p-2">🔔</button>
-          <button className="p-2">👤</button>
+    <div className="p-4 md:p-8 max-w-6xl mx-auto w-full h-full flex flex-col">
+      <div className="mb-6 flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight mb-2 flex items-center gap-2"><Navigation size={28} className="text-primary"/> Live Routes</h1>
+          <p className="text-muted-foreground">Plan your journey with real-time directions and traffic info.</p>
         </div>
       </div>
 
-      <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
-        <GoogleMap
-          mapContainerStyle={containerStyle}
-          center={center}
-          zoom={10}
-        >
-          {directions && <DirectionsRenderer directions={directions} />}
-        </GoogleMap>
-      </LoadScript>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-[500px]">
+        {/* Controls */}
+        <Card className="lg:col-span-1 bg-card/50 backdrop-blur-sm border-border/50 h-fit">
+          <CardHeader>
+            <CardTitle className="text-lg">Trip Planner</CardTitle>
+            <CardDescription>Enter locations to get optimal routes.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3 h-4 w-4 text-emerald-500" />
+                <Input placeholder="Starting point..." className="pl-9 bg-secondary/50" />
+              </div>
+              <div className="w-0.5 h-4 bg-border mx-auto"></div>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3 h-4 w-4 text-rose-500" />
+                <Input placeholder="Destination..." className="pl-9 bg-secondary/50" />
+              </div>
+            </div>
+            
+            <Button className="w-full">Get Directions</Button>
 
-      <div className="mt-6 space-y-4">
-        <div className="flex items-center space-x-4">
-          <input
-            type="text"
-            placeholder="Choose Your Location"
-            className="flex-1 p-2 border rounded"
-            value={origin}
-            onChange={(e) => setOrigin(e.target.value)}
-          />
-          <button className="p-2 bg-blue-100 rounded-full">📍</button>
-        </div>
+            <div className="pt-4 border-t border-border/50 mt-4">
+              <Button variant="outline" className="w-full flex gap-2" onClick={() => setShowTraffic(!showTraffic)}>
+                <TrafficCone size={16} className={showTraffic ? 'text-amber-500' : 'text-muted-foreground'} />
+                {showTraffic ? 'Hide Traffic' : 'Show Traffic'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="flex items-center space-x-4">
-          <input
-            type="text"
-            placeholder="Destination"
-            className="flex-1 p-2 border rounded"
-            value={destination}
-            onChange={(e) => setDestination(e.target.value)}
-          />
-          <button 
-            className="p-2 bg-blue-100 rounded-full"
-            onClick={() => {
-              const temp = origin;
-              setOrigin(destination);
-              setDestination(temp);
-            }}
-          >
-            🔄
-          </button>
-        </div>
-
-        <button
-          onClick={calculateRoute}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-        >
-          Get Directions
-        </button>
-
-        <div className="flex justify-around mt-4">
-          {transportModes.map(mode => (
-            <button
-              key={mode.id}
-              className={`p-3 rounded-full transition-colors ${
-                selectedMode.id === mode.id 
-                  ? 'bg-blue-100' 
-                  : 'hover:bg-gray-100'
-              }`}
-              onClick={() => setSelectedMode(mode)}
-            >
-              {mode.icon}
-            </button>
-          ))}
-        </div>
-
-        <div className="bg-white p-4 rounded shadow">
-          <p>Traffic Signals Ahead: 8</p>
-          <p>Tolls: 1</p>
-          <p>Speed limit: 80 km/hr</p>
-        </div>
+        {/* Map */}
+        <Card className="lg:col-span-3 p-1 bg-card/50 backdrop-blur-sm border-border/50 overflow-hidden relative">
+          <div className="absolute inset-0 m-1 rounded-[var(--radius)] overflow-hidden shadow-inner border border-border">
+            <GoogleMap mapContainerStyle={mapContainerStyle} zoom={12} center={center} options={{ disableDefaultUI: true, zoomControl: true, styles: [ { "elementType": "geometry", "stylers": [{ "color": "#1A1A2E" }] }, { "elementType": "labels.text.stroke", "stylers": [{ "color": "#1A1A2E" }] }, { "elementType": "labels.text.fill", "stylers": [{ "color": "#9CA3AF" }] }, { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#2C2C4A" }] }, { "featureType": "road.arterial", "elementType": "geometry", "stylers": [{ "color": "#374151" }] }, { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#4B5563" }] }, { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#0F172A" }] } ]}}>
+              {directions && <DirectionsRenderer directions={directions} options={{ polylineOptions: { strokeColor: '#0D9488', strokeWeight: 5 } }} />}
+              {showTraffic && <TrafficLayer />}
+            </GoogleMap>
+          </div>
+        </Card>
       </div>
     </div>
   );
 }
-
-export default Routes;
