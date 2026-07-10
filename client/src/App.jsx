@@ -24,15 +24,14 @@ function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
-          <Route
-            path="/*"
+          <Route path="/*"
             element={
               <ProtectedRoute>
-                <div className="flex min-h-screen bg-gray-50">
+                <div className="flex h-screen bg-gray-50 text-gray-900 font-sans overflow-hidden">
                   <Sidebar />
-                  <div className="ml-64 flex-1">
+                  <div className="ml-64 flex-1 flex flex-col h-screen overflow-hidden">
                     <Header />
-                    <div className='flex-1'>
+                    <main className="flex-1 flex flex-col overflow-y-auto min-h-0 relative bg-gray-50">
                       <Routes>
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/smart-parking" element={<SmartParking />} />
@@ -44,10 +43,8 @@ function App() {
                         <Route path="/about" element={<About />} />
                         <Route path="/chat" element={<ChatBot />} />
                       </Routes>
-                    </div>
-                    <Footer/>
+                    </main>
                   </div> 
-
                 </div>
               </ProtectedRoute>
             }
