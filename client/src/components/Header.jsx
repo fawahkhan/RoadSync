@@ -1,35 +1,51 @@
-import { Bell } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Bell, Search } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
 export default function Header() {
+  const location = useLocation();
   const { user } = useAuth();
+  
+  const getPageTitle = () => {
+    const path = location.pathname.split('/')[1];
+    if (!path) return 'Dashboard';
+    return path.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  };
 
   return (
-    <header className="flex justify-between items-center px-8 py-4 bg-white border-b border-gray-200 sticky top-0 z-10">
-      <div>
-        <h1 className="text-lg font-semibold text-gray-900">
-          Welcome back, {user?.name || 'User'}
-        </h1>
+    <header className="sticky top-0 z-30 flex items-center justify-between px-8 py-5 bg-background/80 backdrop-blur-md border-b border-border transition-all">
+      <div className="flex items-center gap-4 flex-1">
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">{getPageTitle()}</h1>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 text-sm">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 text-teal-600 rounded-full font-medium">
-            💎 {user?.gems || 0}
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-600 rounded-full font-medium">
-            🏆 {user?.badges?.length || 0}
-          </span>
+      <div className="flex items-center gap-4">
+        <div className="hidden md:flex relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 group-focus-within:text-primary transition-colors" />
+          <input 
+            type="text" 
+            placeholder="Search anything..." 
+            className="w-64 pl-10 pr-4 py-2 bg-secondary/50 border border-transparent focus:border-primary/50 focus:bg-background rounded-full text-sm outline-none transition-all focus:shadow-[0_0_15px_rgba(var(--primary),0.1)]"
+          />
         </div>
+        
+        <Button variant="ghost" size="icon" className="relative rounded-full hover:bg-secondary">
+          <Bell className="w-5 h-5 text-muted-foreground" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full border-2 border-background"></span>
+        </Button>
 
-        <div className="w-px h-6 bg-gray-200 mx-1" />
+        <div className="h-8 w-px bg-border mx-2"></div>
 
-        <button className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors">
-          <Bell size={18} />
-        </button>
-
-        <div className="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center text-sm font-semibold">
-          {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+        <div className="flex items-center gap-3">
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-semibold text-foreground leading-none">{user?.name || 'Urban Citizen'}</p>
+            <p className="text-xs text-muted-foreground mt-1">Level 4 Explorer</p>
+          </div>
+          <Avatar className="h-10 w-10 border border-border shadow-sm ring-2 ring-transparent hover:ring-primary/20 transition-all cursor-pointer">
+            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'default'}`} />
+            <AvatarFallback>UX</AvatarFallback>
+          </Avatar>
         </div>
       </div>
     </header>

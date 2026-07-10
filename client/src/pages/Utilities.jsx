@@ -1,75 +1,55 @@
-import { useState } from 'react';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import { Search, Info, MapPin } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-const containerStyle = { width: '100%', height: '100%', borderRadius: '0.75rem' };
-const center = { lat: 40.7128, lng: -74.0060 };
-
-function Utilities() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const facilities = [
-    { id: 'hospital', name: 'Hospital', icon: '🏥' },
-    { id: 'pharmacy', name: 'Pharmacy', icon: '💊' },
-    { id: 'petrol', name: 'Petrol Pump', icon: '⛽' },
-    { id: 'police', name: 'Police', icon: '🚓' },
-  ];
-  const suggestions = [
-    { id: 1, name: 'City General Hospital', rating: '4.5', distance: '2.5 km', image: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?q=80&w=500&auto=format&fit=crop' },
-    { id: 2, name: 'Central Medical Center', rating: '4.3', distance: '3.1 km', image: 'https://images.unsplash.com/photo-1632833239869-a37e3a5806d2?q=80&w=500&auto=format&fit=crop' },
-    { id: 3, name: 'Memorial Hospital', rating: '4.7', distance: '1.8 km', image: 'https://images.unsplash.com/photo-1596541223130-5d31a73fb6c6?q=80&w=500&auto=format&fit=crop' },
+export default function Utilities() {
+  const utilities = [
+    { name: 'City General Hospital', type: 'Hospital', distance: '1.2 km', status: 'Open 24/7' },
+    { name: 'Central Fire Station', type: 'Fire Station', distance: '2.5 km', status: 'Active' },
+    { name: 'Downtown Police Precinct', type: 'Police', distance: '0.8 km', status: 'Active' },
+    { name: 'Public Restrooms - Park Plaza', type: 'Restroom', distance: '0.3 km', status: 'Open' },
+    { name: 'EV Charging - Block B', type: 'EV Station', distance: '1.5 km', status: '2 Available' },
+    { name: 'Community Center', type: 'Shelter', distance: '3.0 km', status: 'Open' },
   ];
 
   return (
-    <div className="p-8 max-w-6xl mx-auto w-full">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto w-full h-full flex flex-col">
+      <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Public Utilities</h1>
-          <p className="text-gray-500">Find hospitals, pharmacies, petrol stations, and more near you.</p>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Public Utilities</h1>
+          <p className="text-muted-foreground">Locate essential services and infrastructure nearby.</p>
         </div>
-        <div className="relative w-72">
-          <input type="text" placeholder="Search facilities..." className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition-colors outline-none" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-          <span className="absolute left-3 top-3 text-sm">🔍</span>
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search hospitals, EV stations..." className="pl-9 bg-secondary/50 rounded-full" />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-        {facilities.map(f => (
-          <button key={f.id} className="flex items-center gap-3 p-4 bg-white border border-gray-200 rounded-xl hover:border-teal-400 hover:shadow-sm transition-all text-left">
-            <span className="text-2xl">{f.icon}</span>
-            <span className="text-sm font-medium text-gray-900">{f.name}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden h-[400px]">
-          <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
-            <GoogleMap mapContainerStyle={containerStyle} center={center} zoom={12}>
-              <Marker position={center} />
-            </GoogleMap>
-          </LoadScript>
-        </div>
-
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Nearby</h2>
-          <div className="space-y-4">
-            {suggestions.map(s => (
-              <div key={s.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden flex hover:shadow-sm transition-shadow cursor-pointer">
-                <img src={s.image} alt={s.name} className="w-28 h-24 object-cover flex-shrink-0" />
-                <div className="p-4 flex flex-col justify-center">
-                  <h3 className="font-medium text-gray-900 text-sm">{s.name}</h3>
-                  <div className="flex gap-3 mt-1 text-xs text-gray-500">
-                    <span>⭐ {s.rating}</span>
-                    <span>📍 {s.distance}</span>
-                  </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {utilities.map((u, i) => (
+          <Card key={i} className="bg-card/50 backdrop-blur-sm border-border/50 hover:bg-card hover:border-primary/50 transition-all cursor-pointer group">
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-start">
+                <Badge variant="outline" className="bg-secondary text-secondary-foreground">{u.type}</Badge>
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <MapPin size={12} className="mr-1" /> {u.distance}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+              <CardTitle className="text-lg mt-3 group-hover:text-primary transition-colors">{u.name}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-emerald-500 flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                  {u.status}
+                </span>
+                <Info size={16} className="text-muted-foreground" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );
 }
-
-export default Utilities;

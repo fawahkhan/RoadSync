@@ -1,89 +1,72 @@
 import { useState } from 'react';
-import { GoogleMap, LoadScript, DirectionsRenderer } from '@react-google-maps/api';
+import { MapPin, Navigation, TrafficCone } from 'lucide-react';
+import { GoogleMap, useLoadScript, DirectionsRenderer, TrafficLayer } from '@react-google-maps/api';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-const containerStyle = { width: '100%', height: '100%', borderRadius: '0.75rem' };
-const center = { lat: 40.7128, lng: -74.0060 };
+const libraries = ['places'];
+const mapContainerStyle = { width: '100%', height: '100%', borderRadius: 'var(--radius)' };
+const center = { lat: 28.6139, lng: 77.2090 };
 
-function Routes() {
-  const [origin, setOrigin] = useState('');
-  const [destination, setDestination] = useState('');
+export default function RoutesPage() {
+  const { isLoaded, loadError } = useLoadScript({ googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY, libraries });
   const [directions, setDirections] = useState(null);
-  const transportModes = [
-    { id: 'car', label: '🚗 Drive', mode: 'DRIVING' },
-    { id: 'bus', label: '🚌 Transit', mode: 'TRANSIT' },
-    { id: 'walk', label: '🚶 Walk', mode: 'WALKING' },
-    { id: 'bicycle', label: '🚲 Bike', mode: 'BICYCLING' },
-  ];
-  const [selectedMode, setSelectedMode] = useState(transportModes[0]);
+  const [showTraffic, setShowTraffic] = useState(true);
 
-  const inputCls = "w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition-colors outline-none";
-
-  const calculateRoute = () => {
-    if (!origin || !destination) return;
-    const service = new window.google.maps.DirectionsService();
-    service.route({ origin, destination, travelMode: selectedMode.mode }, (result, status) => {
-      if (status === 'OK') setDirections(result);
-      else alert("Unable to fetch directions. Please check your input.");
-    });
-  };
+  if (loadError) return <div className="p-8 max-w-6xl mx-auto w-full text-destructive">Error loading maps. Check API Key.</div>;
+  if (!isLoaded) return <div className="p-8 max-w-6xl mx-auto w-full text-muted-foreground animate-pulse">Loading Map Environment...</div>;
 
   return (
-    <div className="p-8 max-w-6xl mx-auto w-full">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Routes</h1>
-      <p className="text-gray-500 mb-8">Plan your journey with real-time directions and traffic info.</p>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Controls */}
-        <div className="space-y-5">
-          <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1.5">From</label>
-              <input type="text" className={inputCls} placeholder="Starting point" value={origin} onChange={(e) => setOrigin(e.target.value)} />
-            </div>
-            <div className="flex justify-center">
-              <button className="p-1.5 text-gray-400 hover:text-teal-600 transition-colors text-lg" onClick={() => { setOrigin(destination); setDestination(origin); }}>⇅</button>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-900 mb-1.5">To</label>
-              <input type="text" className={inputCls} placeholder="Destination" value={destination} onChange={(e) => setDestination(e.target.value)} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              {transportModes.map(m => (
-                <button key={m.id} onClick={() => setSelectedMode(m)}
-                  className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${selectedMode.id === m.id ? 'bg-teal-50 text-teal-600 border border-teal-200' : 'bg-gray-50 text-gray-600 border border-gray-200 hover:border-gray-300'}`}>
-                  {m.label}
-                </button>
-              ))}
-            </div>
-
-            <button onClick={calculateRoute} className="w-full bg-teal-600 text-white py-2.5 rounded-lg hover:bg-teal-700 transition-colors font-semibold text-sm">
-              Get Directions
-            </button>
-          </div>
-
-          <div className="bg-white border border-gray-200 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Route Info</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-gray-500">Traffic Signals</span><span className="font-medium text-gray-900">8</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Tolls</span><span className="font-medium text-gray-900">1</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Speed Limit</span><span className="font-medium text-gray-900">80 km/hr</span></div>
-            </div>
-          </div>
+    <div className="p-4 md:p-8 max-w-6xl mx-auto w-full h-full flex flex-col">
+      <div className="mb-6 flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight mb-2 flex items-center gap-2"><Navigation size={28} className="text-primary"/> Live Routes</h1>
+          <p className="text-muted-foreground">Plan your journey with real-time directions and traffic info.</p>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-[500px]">
+        {/* Controls */}
+        <Card className="lg:col-span-1 bg-card/50 backdrop-blur-sm border-border/50 h-fit">
+          <CardHeader>
+            <CardTitle className="text-lg">Trip Planner</CardTitle>
+            <CardDescription>Enter locations to get optimal routes.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3 h-4 w-4 text-emerald-500" />
+                <Input placeholder="Starting point..." className="pl-9 bg-secondary/50" />
+              </div>
+              <div className="w-0.5 h-4 bg-border mx-auto"></div>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3 h-4 w-4 text-rose-500" />
+                <Input placeholder="Destination..." className="pl-9 bg-secondary/50" />
+              </div>
+            </div>
+            
+            <Button className="w-full">Get Directions</Button>
+
+            <div className="pt-4 border-t border-border/50 mt-4">
+              <Button variant="outline" className="w-full flex gap-2" onClick={() => setShowTraffic(!showTraffic)}>
+                <TrafficCone size={16} className={showTraffic ? 'text-amber-500' : 'text-muted-foreground'} />
+                {showTraffic ? 'Hide Traffic' : 'Show Traffic'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Map */}
-        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl overflow-hidden h-[500px]">
-          <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
-            <GoogleMap mapContainerStyle={containerStyle} center={center} zoom={10}>
-              {directions && <DirectionsRenderer directions={directions} />}
+        <Card className="lg:col-span-3 p-1 bg-card/50 backdrop-blur-sm border-border/50 overflow-hidden relative">
+          <div className="absolute inset-0 m-1 rounded-[var(--radius)] overflow-hidden shadow-inner border border-border">
+            <GoogleMap mapContainerStyle={mapContainerStyle} zoom={12} center={center} options={{ disableDefaultUI: true, zoomControl: true, styles: [ { "elementType": "geometry", "stylers": [{ "color": "#1A1A2E" }] }, { "elementType": "labels.text.stroke", "stylers": [{ "color": "#1A1A2E" }] }, { "elementType": "labels.text.fill", "stylers": [{ "color": "#9CA3AF" }] }, { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#2C2C4A" }] }, { "featureType": "road.arterial", "elementType": "geometry", "stylers": [{ "color": "#374151" }] }, { "featureType": "road.highway", "elementType": "geometry", "stylers": [{ "color": "#4B5563" }] }, { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#0F172A" }] } ]}}>
+              {directions && <DirectionsRenderer directions={directions} options={{ polylineOptions: { strokeColor: '#0D9488', strokeWeight: 5 } }} />}
+              {showTraffic && <TrafficLayer />}
             </GoogleMap>
-          </LoadScript>
-        </div>
+          </div>
+        </Card>
       </div>
     </div>
   );
 }
-
-export default Routes;

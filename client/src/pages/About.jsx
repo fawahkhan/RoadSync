@@ -1,54 +1,54 @@
-import { Navigation2, Shield, Leaf, MapPin, Award, Users } from 'lucide-react';
+import { Github, Twitter, Mail, Navigation2, Code2, Cpu } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function About() {
-  const features = [
-    { icon: Shield, title: 'Safe & Secure', description: 'Advanced security measures to protect your data and privacy', color: 'text-blue-600', bg: 'bg-blue-50' },
-    { icon: Leaf, title: 'Eco-Friendly', description: 'Helping reduce carbon emissions through smart transportation', color: 'text-green-600', bg: 'bg-green-50' },
-    { icon: MapPin, title: 'Smart Navigation', description: 'Find parking and optimize routes with real-time data', color: 'text-red-600', bg: 'bg-red-50' },
-    { icon: Award, title: 'Rewards System', description: 'Earn gems and badges for contributing to a better city', color: 'text-yellow-600', bg: 'bg-yellow-50' },
-    { icon: Users, title: 'Community Driven', description: 'Join citizens working together for safer, cleaner cities', color: 'text-purple-600', bg: 'bg-purple-50' },
-  ];
-
   return (
-    <div className="p-8 max-w-4xl mx-auto w-full">
-      <div className="text-center mb-16">
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <Navigation2 className="text-teal-600" size={36} />
-          <span className="text-2xl font-bold text-gray-900">RoadSync</span>
+    <div className="p-4 md:p-8 max-w-4xl mx-auto w-full text-center">
+      <div className="mb-12 pt-8">
+        <div className="w-20 h-20 mx-auto bg-primary/10 rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(var(--primary),0.2)]">
+          <Navigation2 className="w-10 h-10 text-primary" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Making Cities Smarter, Safer, and Sustainable</h1>
-        <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-          RoadSync is your all-in-one platform for smart city navigation, parking management, and community safety.
+        <h1 className="text-4xl font-bold tracking-tight mb-4">About RoadSync</h1>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          RoadSync is an open-source intelligent city operating system designed to make urban mobility smarter, safer, and greener.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-16">
-        {features.map((f, i) => (
-          <div key={i} className="bg-white border border-gray-200 rounded-xl p-6">
-            <div className={`inline-flex p-2.5 rounded-lg ${f.bg} mb-4`}>
-              <f.icon size={20} className={f.color} />
-            </div>
-            <h3 className="text-base font-semibold text-gray-900 mb-2">{f.title}</h3>
-            <p className="text-sm text-gray-500 leading-relaxed">{f.description}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 text-left">
+        <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+          <CardHeader>
+            <Code2 className="w-8 h-8 text-primary mb-2" />
+            <CardTitle>Open Source</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Built by the community, for the community. RoadSync's codebase is transparent and driven by contributors worldwide.
+          </CardContent>
+        </Card>
+        <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+          <CardHeader>
+            <Cpu className="w-8 h-8 text-primary mb-2" />
+            <CardTitle>AI Powered</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Integrating state-of-the-art models like Gemini to analyze traffic patterns and reduce your carbon footprint dynamically.
+          </CardContent>
+        </Card>
+        <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+          <CardHeader>
+            <Navigation2 className="w-8 h-8 text-primary mb-2" />
+            <CardTitle>Next-Gen Mobility</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            From smart parking allocation to emergency routing, we're building the infrastructure of tomorrow.
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="bg-teal-50 border border-teal-100 rounded-xl p-8 mb-16">
-        <h2 className="text-xl font-bold text-gray-900 text-center mb-3">Our Mission</h2>
-        <p className="text-gray-600 text-center max-w-2xl mx-auto leading-relaxed">
-          To transform urban mobility through innovative technology, making cities more livable, sustainable, and connected.
-        </p>
-      </div>
-
-      <div className="bg-white border border-gray-200 rounded-xl p-8 text-center max-w-md mx-auto">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Get in Touch</h2>
-        <p className="text-sm text-gray-500 mb-5">Have questions? We'd love to hear from you.</p>
-        <div className="space-y-2 text-sm text-gray-500">
-          <p>📧 contact@roadsync.com</p>
-          <p>📞 (555) 123-4567</p>
-          <p>📍 123 Innovation Street, Smart City</p>
-        </div>
+      <div className="flex justify-center gap-4">
+        <Button variant="outline" className="gap-2"><Github size={18}/> GitHub</Button>
+        <Button variant="outline" className="gap-2"><Twitter size={18}/> Twitter</Button>
+        <Button variant="outline" className="gap-2"><Mail size={18}/> Contact Us</Button>
       </div>
     </div>
   );

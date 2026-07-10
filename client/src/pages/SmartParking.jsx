@@ -1,5 +1,9 @@
 import { useState } from 'react';
-import { Car } from 'lucide-react';
+import { Car, MapPin, Clock } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 export default function SmartParking() {
   const [location, setLocation] = useState('');
@@ -7,57 +11,62 @@ export default function SmartParking() {
   const [checkOut, setCheckOut] = useState('');
 
   return (
-    <div className="p-8 max-w-5xl mx-auto w-full">
-      <h1 className="text-2xl font-bold text-text-primary mb-2">Smart Parking</h1>
-      <p className="text-text-secondary mb-8">Find and book parking spots near you in seconds.</p>
+    <div className="p-4 md:p-8 max-w-3xl mx-auto w-full">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight mb-2">Smart Parking</h1>
+        <p className="text-muted-foreground">Find and book parking spots near you in seconds.</p>
+      </div>
 
-      <div className="max-w-2xl">
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-          <img
-            src="https://images.unsplash.com/photo-1506521781263-d8422e82f27a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80"
-            alt="Parking lot"
-            className="w-full h-48 object-cover"
-          />
-          <div className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-5 flex items-center gap-2">
-              <Car size={20} className="text-teal-600" /> Find a spot
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1.5">Location</label>
-                <input
-                  type="text"
-                  className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition-colors outline-none"
-                  placeholder="Enter location"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1.5">Check in</label>
-                <input
-                  type="time"
-                  className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition-colors outline-none"
-                  value={checkIn}
-                  onChange={(e) => setCheckIn(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-1.5">Check out</label>
-                <input
-                  type="time"
-                  className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 focus:border-teal-600 focus:ring-1 focus:ring-teal-600 transition-colors outline-none"
-                  value={checkOut}
-                  onChange={(e) => setCheckOut(e.target.value)}
-                />
+      <Card className="bg-card/50 backdrop-blur-sm border-border/50 overflow-hidden shadow-xl">
+        <div className="h-48 bg-[url('https://images.unsplash.com/photo-1506521781263-d8422e82f27a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80')] bg-cover bg-center relative">
+          <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
+        </div>
+        
+        <CardHeader className="-mt-10 relative z-10">
+          <CardTitle className="flex items-center gap-2 text-2xl">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg">
+              <Car size={20} className="text-primary-foreground" />
+            </div>
+            Reserve a Spot
+          </CardTitle>
+          <CardDescription>Enter details below to find available real-time parking.</CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-6 mt-2">
+          <div className="space-y-2">
+            <Label>Location</Label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Enter destination..." 
+                className="pl-9 bg-secondary/50" 
+                value={location} onChange={(e) => setLocation(e.target.value)} 
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Check-in</Label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input type="time" className="pl-9 bg-secondary/50" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
               </div>
             </div>
-            <button className="w-full bg-teal-600 text-white py-2.5 rounded-lg hover:bg-teal-700 transition-colors font-semibold text-sm">
-              Book Now
-            </button>
+            <div className="space-y-2">
+              <Label>Check-out</Label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input type="time" className="pl-9 bg-secondary/50" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+
+        <CardFooter>
+          <Button className="w-full text-base h-12">Search Availability</Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

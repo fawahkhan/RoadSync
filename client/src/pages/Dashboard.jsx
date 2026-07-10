@@ -1,120 +1,77 @@
-import { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { emissionsAPI, usersAPI } from '../lib/api';
 import { useAuth } from '../contexts/AuthContext';
-import { TrendingUp, Zap, Award } from 'lucide-react';
+import { ShieldAlert, Car, Leaf, TrendingUp } from 'lucide-react';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [chartData, setChartData] = useState([]);
-  const [leaderboard, setLeaderboard] = useState([]);
-  const [stats, setStats] = useState({ totalTrips: 0, totalCO2: 0, avgCO2PerTrip: 0 });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        const [emissionRes, leaderboardRes] = await Promise.all([
-          emissionsAPI.getSummary(),
-          usersAPI.getLeaderboard(),
-        ]);
-        setChartData(emissionRes.data.monthly || []);
-        setStats(emissionRes.data.stats || { totalTrips: 0, totalCO2: 0, avgCO2PerTrip: 0 });
-        setLeaderboard(leaderboardRes.data.leaderboard || []);
-      } catch (err) {
-        console.error('Dashboard load error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadDashboardData();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="p-8 flex items-center justify-center">
-        <div className="w-8 h-8 border-3 border-teal-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  const statCards = [
-    { label: 'Total Trips', value: stats.totalTrips, icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Total CO₂ Emitted', value: `${(stats.totalCO2 / 1000).toFixed(1)} kg`, icon: Zap, color: 'text-orange-600', bg: 'bg-orange-50' },
-    { label: 'Your Gems', value: `💎 ${user?.gems || 0}`, icon: Award, color: 'text-purple-600', bg: 'bg-purple-50' },
+  const mockData = [
+    { name: 'Mon', emissions: 12 }, { name: 'Tue', emissions: 19 }, { name: 'Wed', emissions: 15 },
+    { name: 'Thu', emissions: 22 }, { name: 'Fri', emissions: 18 }, { name: 'Sat', emissions: 28 }, { name: 'Sun', emissions: 24 }
   ];
 
+  const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+  const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
+
   return (
-    <div className="p-8 max-w-6xl mx-auto w-full">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto w-full">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome back, {user?.name || 'Citizen'}</h1>
+        <p className="text-muted-foreground">Here is what's happening in your city today.</p>
+      </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-        {statCards.map((s, i) => (
-          <div key={i} className="bg-white border border-gray-200 rounded-xl p-5 flex items-center gap-4">
-            <div className={`p-2.5 rounded-lg ${s.bg}`}>
-              <s.icon size={20} className={s.color} />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">{s.label}</p>
-              <p className="text-xl font-bold text-gray-900">{s.value}</p>
-            </div>
-          </div>
+      <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {[
+          { title: 'CO₂ Saved', val: '42 kg', icon: Leaf, col: 'text-emerald-500' },
+          { title: 'Parking Booked', val: '12', icon: Car, col: 'text-blue-500' },
+          { title: 'Incidents Reported', val: '3', icon: ShieldAlert, col: 'text-rose-500' },
+          { title: 'Global Rank', val: '#4,291', icon: TrendingUp, col: 'text-amber-500' }
+        ].map((stat, i) => (
+          <motion.div variants={item} key={i}>
+            <Card className="bg-card/50 backdrop-blur-sm border-border/50 hover:bg-card hover:shadow-md transition-all">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
+                <stat.icon className={`w-4 h-4 ${stat.col}`} />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.val}</div>
+                <p className="text-xs text-muted-foreground mt-1">+12% from last month</p>
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Emission History</h2>
-        {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis dataKey="label" stroke="#9CA3AF" fontSize={12} />
-              <YAxis stroke="#9CA3AF" fontSize={12} />
-              <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px' }} formatter={(value) => [`${value}g CO₂`, 'Emissions']} />
-              <Line type="monotone" dataKey="totalCO2" stroke="#0D9488" strokeWidth={2} dot={{ fill: '#0D9488', r: 3 }} activeDot={{ r: 5 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="h-[300px] flex items-center justify-center text-gray-400">
-            <div className="text-center">
-              <p className="text-3xl mb-2">📊</p>
-              <p className="text-sm">No emission data yet. Track your first trip!</p>
+      <motion.div variants={item} initial="hidden" animate="show">
+        <Card className="bg-card/50 backdrop-blur-sm border-border/50">
+          <CardHeader>
+            <CardTitle className="text-lg">Weekly Emissions Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[350px] w-full mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={mockData}>
+                  <defs>
+                    <linearGradient id="colorEmissions" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: 'hsl(var(--muted-foreground))', fontSize: 12}} dx={-10} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '8px', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' }}
+                    itemStyle={{ color: 'hsl(var(--primary))' }}
+                  />
+                  <Area type="monotone" dataKey="emissions" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorEmissions)" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
-          </div>
-        )}
-      </div>
-
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Leaderboard</h2>
-        <div className="space-y-1">
-          {leaderboard.length > 0 ? (
-            leaderboard.map((entry) => (
-              <div key={entry.id} className="flex items-center justify-between py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                    entry.rank === 1 ? 'bg-yellow-100 text-yellow-700' :
-                    entry.rank === 2 ? 'bg-gray-100 text-gray-600' :
-                    entry.rank === 3 ? 'bg-orange-100 text-orange-700' : 'bg-gray-50 text-gray-500'
-                  }`}>{entry.rank}</span>
-                  <span className="font-medium text-gray-900">{entry.name}</span>
-                  {entry.id === user?.id && (
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">You</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <span>💎 {entry.gems}</span>
-                  <span>🏆 {entry.badgeCount}</span>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="py-10 text-center text-gray-400">
-              <p className="text-3xl mb-2">🏆</p>
-              <p className="text-sm">No leaderboard data yet. Be the first!</p>
-            </div>
-          )}
-        </div>
-      </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }
