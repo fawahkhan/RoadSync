@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { authAPI } from '../lib/api';
 import { Navigation2, ArrowRight, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,7 +13,7 @@ export default function Auth() {
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -22,16 +21,17 @@ export default function Auth() {
     setError('');
     setIsLoading(true);
     try {
-      if (isLogin) {
-        await signIn(formData.email, formData.password);
+      const res = isLogin
+        ? await signIn(formData.email, formData.password)
+        : await signUp(formData.name, formData.email, formData.password);
+
+      if (res?.error) {
+        setError(res.error);
       } else {
-        const res = await authAPI.register(formData);
-        localStorage.setItem('token', res.data.token);
-        await signIn(formData.email, formData.password);
+        navigate('/dashboard');
       }
-      navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred. Please try again.');
+      setError(err.message || 'An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
