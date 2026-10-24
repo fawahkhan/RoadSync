@@ -1,18 +1,23 @@
+import Navbar from './Navbar';
 import BottomNav from './BottomNav';
 
-export default function MobileShell({ children, hideNav = false }) {
+export default function MobileShell({ children, hideNav = false, fullBleed = false }) {
   return (
-    <div className="min-h-screen bg-[#050811] flex justify-center text-slate-100 font-sans">
-      {/* Mobile Frame Container */}
-      <div className="w-full max-w-md bg-[#0B0F17] min-h-screen flex flex-col relative shadow-2xl border-x border-[#1E2B40]/50">
-        {/* Main Screen Content */}
-        <div className="flex-1 flex flex-col overflow-y-auto pb-20">
-          {children}
-        </div>
+    <div className="min-h-screen bg-[#070A0F] text-slate-100 font-sans flex flex-col selection:bg-emerald-500/30">
+      {/* Desktop / Tablet Top Navigation Header */}
+      <Navbar />
 
-        {/* Persistent Mobile Bottom Navigation */}
-        {!hideNav && <BottomNav />}
-      </div>
+      {/* Main Screen Content */}
+      <main className={`flex-1 w-full flex flex-col ${
+        fullBleed 
+          ? 'w-full' 
+          : 'max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 md:py-6'
+      } ${hideNav ? 'pb-4' : 'pb-20 md:pb-8'}`}>
+        {children}
+      </main>
+
+      {/* Persistent Mobile Bottom Navigation (Only on screens < md) */}
+      {!hideNav && <BottomNav />}
     </div>
   );
 }
