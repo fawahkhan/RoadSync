@@ -33,13 +33,13 @@ export const sendMessage = async (req, res) => {
       sessionId,
     });
   } catch (error) {
-    // Handle Gemini-specific errors
-    if (error.message?.includes('RATE_LIMIT') || error.message?.includes('429')) {
+    console.error('Chat error:', error.message || error);
+    // Handle Gemini-specific rate limit / quota errors
+    if (error.status === 429 || error.message?.includes('429') || error.message?.includes('RATE_LIMIT') || error.message?.includes('quota')) {
       return res.status(429).json({
-        message: 'AI service is busy. Please try again in a moment.',
+        message: 'AI service quota exceeded. Please try again later.',
       });
     }
-    console.error('Chat error:', error);
     res.status(500).json({ message: 'Failed to get AI response. Please try again.' });
   }
 };

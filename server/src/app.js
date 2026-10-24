@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import errorHandler from './middleware/errorHandler.js';
 
 // Route imports
@@ -10,8 +9,6 @@ import parkingRoutes from './routes/parking.js';
 import emissionRoutes from './routes/emissions.js';
 import crimeRoutes from './routes/crimes.js';
 import chatRoutes from './routes/chat.js';
-
-dotenv.config();
 
 const app = express();
 

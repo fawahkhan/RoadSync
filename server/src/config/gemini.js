@@ -1,8 +1,37 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+let genAI;
+let _primaryModel;
+let _fallbackModel;
 
-// Use gemini-2.0-flash for free tier — fast, capable, generous limits
-export const geminiModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+function getGenAI() {
+  if (!genAI) {
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  }
+  return genAI;
+}
 
-export default genAI;
+// Primary model — fast and capable
+export function getGeminiModel() {
+  if (!_primaryModel) {
+    _primaryModel = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' });
+  }
+  return _primaryModel;
+}
+
+// Fallback model — lighter, separate quota pool
+export function getFallbackModel() {
+  if (!_fallbackModel) {
+    _fallbackModel = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash' });
+  }
+  return _fallbackModel;
+}
+
+// Keep backward-compatible export
+export const geminiModel = new Proxy({}, {
+  get(_, prop) {
+    return getGeminiModel()[prop];
+  }
+});
+
+export default { getGenAI, getGeminiModel, getFallbackModel };
