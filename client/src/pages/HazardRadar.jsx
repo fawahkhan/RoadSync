@@ -26,7 +26,9 @@ import {
   ArrowLeft,
   Filter,
   Eye,
-  Check
+  Check,
+  Radio,
+  Layers
 } from 'lucide-react';
 import { StorageService } from '../services/storageService';
 
@@ -106,6 +108,10 @@ export default function HazardRadar() {
 
       mapInstanceRef.current = map;
     }
+
+    return () => {
+      // In full-screen cockpits, cleanup is handled when unmounting
+    };
   }, [mapContainerRef]);
 
   // Update user location pulse on map
@@ -307,76 +313,213 @@ export default function HazardRadar() {
   });
 
   return (
-    <div className="flex flex-col h-screen w-full bg-[#0B0F17] relative select-none">
-      {/* Top Header matching reference screen 2 */}
-      <div className="z-20 bg-[#0B0F17] px-4 pt-3 pb-2 border-b border-[#1E2B40] flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => navigate('/')} 
-            className="p-1.5 rounded-lg bg-[#162032] text-slate-300 hover:text-white active:scale-95 transition-all"
-          >
-            <ArrowLeft size={18} />
-          </button>
-          <div>
-            <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-1.5">
-              Live Hazard Radar
-            </h1>
-            <p className="text-[11px] text-slate-400">
-              {filteredHazards.length} active road reports nearby
-            </p>
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-60px)] lg:h-[calc(100vh-65px)] w-full bg-[#0B0F17] relative select-none overflow-hidden">
+      
+      {/* ============================================================== */}
+      {/* DESKTOP SIDEBAR / MOBILE TOP BAR & DRAWER                     */}
+      {/* ============================================================== */}
+      <div className="lg:w-[420px] lg:h-full lg:border-r border-[#1E2B40] bg-[#0E1522] flex flex-col shrink-0 z-20">
+        
+        {/* Header Bar */}
+        <div className="bg-[#0B0F17] px-4 py-3 border-b border-[#1E2B40] flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => navigate('/')} 
+              className="p-1.5 rounded-lg bg-[#162032] text-slate-300 hover:text-white active:scale-95 transition-all lg:hidden"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div>
+              <h1 className="text-sm sm:text-base font-bold text-white tracking-tight flex items-center gap-2">
+                <span>Live Hazard Radar</span>
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                </span>
+              </h1>
+              <p className="text-[11px] text-slate-400">
+                {filteredHazards.length} active road reports nearby
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowFilterModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#141C2B] border border-[#1E2B40] hover:border-emerald-500 text-slate-200 text-xs font-semibold active:scale-95 transition-all"
+            >
+              <Filter size={13} className="text-[#10B981]" />
+              <span className="hidden sm:inline">Filter</span>
+            </button>
+
+            <button
+              onClick={() => setIsReporting(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#10B981] hover:bg-emerald-600 text-white text-xs font-bold shadow-md active:scale-95 transition-all"
+              title="Report Hazard"
+            >
+              <Plus size={15} />
+              <span>Report</span>
+            </button>
           </div>
         </div>
 
-        {/* Filter Pill Button (Screen 2 Mockup Match) */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowFilterModal(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#10B981] text-white text-xs font-semibold shadow-md active:scale-95 transition-all"
-          >
-            <Filter size={13} />
-            <span>Filter</span>
-          </button>
-
-          <button
-            onClick={() => setIsReporting(true)}
-            className="flex items-center gap-1 p-1.5 rounded-xl bg-[#162032] border border-[#1E2B40] text-slate-200 hover:text-white active:scale-95 transition-all"
-            title="Report Hazard"
-          >
-            <Plus size={16} />
-          </button>
+        {/* Category Filter Pills */}
+        <div className="bg-[#0B0F17] px-3 py-2.5 flex items-center gap-1.5 overflow-x-auto scrollbar-none border-b border-[#1E2B40]/70">
+          {CATEGORIES.map(cat => {
+            const isSelected = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium shrink-0 transition-all active:scale-95 ${
+                  isSelected
+                    ? 'bg-[#10B981] text-white font-bold shadow-md shadow-emerald-500/20'
+                    : 'bg-[#141C2B] text-slate-300 border border-[#1E2B40] hover:bg-[#1B2538]'
+                }`}
+              >
+                <span>{cat.label}</span>
+              </button>
+            );
+          })}
         </div>
+
+        {/* Desktop List of Reports (Visible on Desktop / Collapsible Drawer on Mobile) */}
+        <div className="hidden lg:flex flex-col flex-1 overflow-hidden">
+          <div className="px-4 py-2.5 bg-[#121927] border-b border-[#1E2B40]/60 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-white uppercase tracking-wider">Nearby Reports</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#162032] text-[#10B981] font-bold border border-emerald-500/30">
+                {filteredHazards.length}
+              </span>
+            </div>
+            <span className="text-[11px] text-slate-400">Click card to zoom</span>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
+            {filteredHazards.length === 0 ? (
+              <div className="py-12 text-center text-xs text-slate-400 space-y-2">
+                <CheckCircle2 size={32} className="mx-auto text-emerald-400 opacity-60" />
+                <p>No hazards matching this filter.</p>
+                <p className="text-[11px] text-slate-500">The road ahead is completely clear!</p>
+              </div>
+            ) : (
+              filteredHazards.map(h => {
+                const catConfig = CATEGORIES.find(c => c.id === h.category) || CATEGORIES[1];
+                const CatIcon = catConfig.icon;
+
+                return (
+                  <div
+                    key={h.id}
+                    onClick={() => {
+                      setSelectedHazard(h);
+                      if (mapInstanceRef.current) {
+                        mapInstanceRef.current.flyTo([h.lat, h.lng], 15);
+                      }
+                    }}
+                    className="p-3.5 rounded-2xl bg-[#141C2B] border border-[#1E2B40] hover:border-emerald-500/50 cursor-pointer transition-all duration-150 flex flex-col gap-2 group hover:bg-[#162032]"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-2.5">
+                        {h.imageUrl ? (
+                          <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-[#1E2B40]">
+                            <img src={h.imageUrl} alt="Thumbnail" className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div 
+                            style={{ backgroundColor: `${catConfig.color}20`, borderColor: catConfig.color }}
+                            className="w-10 h-10 rounded-xl border flex items-center justify-center shrink-0"
+                          >
+                            <CatIcon size={18} style={{ color: catConfig.color }} />
+                          </div>
+                        )}
+
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span 
+                              style={{ color: catConfig.color }} 
+                              className="text-[11px] font-bold uppercase tracking-wider block"
+                            >
+                              {catConfig.label}
+                            </span>
+                            <span className="text-[10px] text-slate-500">• 2 min ago</span>
+                          </div>
+                          <h3 className="text-xs font-semibold text-slate-100 group-hover:text-emerald-400 transition-colors line-clamp-1">
+                            {h.locationName}
+                          </h3>
+                        </div>
+                      </div>
+
+                      <span className="text-[10px] text-slate-300 font-medium bg-[#1B2538] px-2 py-0.5 rounded-full border border-[#27364F]">
+                        {calculateDistance(h.lat, h.lng)} away
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-slate-300 line-clamp-2">
+                      {h.description}
+                    </p>
+
+                    <div className="flex items-center justify-between pt-1 border-t border-[#1E2B40]/60 text-[11px] text-slate-400">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-slate-300 font-medium">{h.author}</span>
+                        {h.verifiedAuthor && (
+                          <CheckCircle2 size={13} className="text-[#10B981]" />
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={(e) => handleUpvote(h.id, e)}
+                          className="flex items-center gap-1 text-slate-300 hover:text-[#10B981] transition-colors"
+                        >
+                          <ThumbsUp size={13} />
+                          <span>{h.upvotes}</span>
+                        </button>
+
+                        <div className="flex items-center gap-1 text-slate-400">
+                          <MessageSquare size={13} />
+                          <span>{h.comments?.length || 0}</span>
+                        </div>
+
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShare(h);
+                          }}
+                          className="text-slate-400 hover:text-white"
+                        >
+                          <Share2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
       </div>
 
-      {/* Category Filter Pills (Horizontal Scroll matching Screen 2) */}
-      <div className="z-20 bg-[#0B0F17] px-3 py-2 flex items-center gap-2 overflow-x-auto scrollbar-none border-b border-[#1E2B40]/60">
-        {CATEGORIES.map(cat => {
-          const isSelected = selectedCategory === cat.id;
-          return (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium shrink-0 transition-all active:scale-95 ${
-                isSelected
-                  ? 'bg-[#10B981] text-white font-semibold shadow-md'
-                  : 'bg-[#141C2B] text-slate-300 border border-[#1E2B40] hover:bg-[#1B2538]'
-              }`}
-            >
-              <span>{cat.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Interactive Map Canvas */}
-      <div className="flex-1 w-full relative">
+      {/* ============================================================== */}
+      {/* INTERACTIVE MAP CANVAS (Full screen on mobile, right on desktop) */}
+      {/* ============================================================== */}
+      <div className="flex-1 w-full h-full relative overflow-hidden">
         <div ref={mapContainerRef} className="w-full h-full" />
 
-        {/* Floating Map Controls on Right (Mockup Screen 2) */}
-        <div className="absolute right-3.5 top-4 z-[1000] flex flex-col gap-2">
+        {/* Floating Desktop Info Badge (Top-Left of map) */}
+        <div className="hidden lg:flex items-center gap-2 absolute top-4 left-4 z-[1000] px-3.5 py-2 rounded-2xl bg-[#0B0F17]/90 backdrop-blur-md border border-[#1E2B40] text-xs font-semibold text-white shadow-2xl">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <span>Delhi NCR Highway Grid</span>
+          <span className="text-slate-400 font-normal">|</span>
+          <span className="text-emerald-400 font-bold">{filteredHazards.length} Live Incidents</span>
+        </div>
+
+        {/* Floating Map Controls on Right */}
+        <div className="absolute right-4 top-4 z-[1000] flex flex-col gap-2">
           {/* Zoom In */}
           <button
             onClick={handleZoomIn}
-            className="w-9 h-9 rounded-xl bg-[#131B2A] text-white shadow-xl border border-[#1E2B40] flex items-center justify-center active:scale-90 transition-transform"
+            className="w-10 h-10 rounded-2xl bg-[#131B2A]/90 backdrop-blur-md text-white shadow-2xl border border-[#1E2B40] flex items-center justify-center active:scale-90 hover:bg-[#1C263A] transition-all"
             title="Zoom In"
           >
             <Plus size={18} />
@@ -385,7 +528,7 @@ export default function HazardRadar() {
           {/* Zoom Out */}
           <button
             onClick={handleZoomOut}
-            className="w-9 h-9 rounded-xl bg-[#131B2A] text-white shadow-xl border border-[#1E2B40] flex items-center justify-center active:scale-90 transition-transform"
+            className="w-10 h-10 rounded-2xl bg-[#131B2A]/90 backdrop-blur-md text-white shadow-2xl border border-[#1E2B40] flex items-center justify-center active:scale-90 hover:bg-[#1C263A] transition-all"
             title="Zoom Out"
           >
             <Minus size={18} />
@@ -394,39 +537,30 @@ export default function HazardRadar() {
           {/* Recenter GPS */}
           <button
             onClick={handleRecenter}
-            className="w-9 h-9 rounded-xl bg-[#131B2A] text-white shadow-xl border border-[#1E2B40] flex items-center justify-center active:scale-90 transition-transform mt-2"
-            title="Recenter GPS"
+            className="w-10 h-10 rounded-2xl bg-[#131B2A]/90 backdrop-blur-md text-white shadow-2xl border border-[#1E2B40] flex items-center justify-center active:scale-90 hover:bg-[#1C263A] transition-all mt-1"
+            title="Recenter on My GPS Location"
           >
             <Crosshair size={18} className="text-[#10B981]" />
           </button>
         </div>
-      </div>
 
-      {/* Bottom Nearby Reports Drawer (Mockup Screen 2 Bottom) */}
-      <div className="z-20 bg-[#101726] border-t border-[#1E2B40] max-h-64 flex flex-col shadow-2xl rounded-t-3xl">
-        <div className="w-12 h-1 bg-slate-600 rounded-full mx-auto mt-2 mb-1" />
+        {/* Bottom Drawer for MOBILE ONLY (Hidden on Desktop because desktop has the sidebar) */}
+        <div className="lg:hidden absolute bottom-0 left-0 right-0 z-20 bg-[#101726]/95 backdrop-blur-lg border-t border-[#1E2B40] max-h-56 flex flex-col shadow-2xl rounded-t-3xl">
+          <div className="w-12 h-1 bg-slate-600 rounded-full mx-auto mt-2 mb-1" />
 
-        <div className="px-4 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="text-sm font-bold text-white">Nearby Reports</h2>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#162032] text-[#10B981] font-semibold">
-              {filteredHazards.length}
-            </span>
-          </div>
-          <span className="text-[11px] text-slate-400">Tap card to inspect</span>
-        </div>
-
-        {/* Reports Scroll List */}
-        <div className="overflow-y-auto px-4 pb-4 space-y-2.5">
-          {filteredHazards.length === 0 ? (
-            <div className="py-6 text-center text-xs text-slate-400">
-              No reports matching your filter. Road is clear!
+          <div className="px-4 py-1.5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xs font-bold text-white">Nearby Reports</h2>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#162032] text-[#10B981] font-bold">
+                {filteredHazards.length}
+              </span>
             </div>
-          ) : (
-            filteredHazards.map(h => {
-              const catConfig = CATEGORIES.find(c => c.id === h.category) || CATEGORIES[1];
-              const CatIcon = catConfig.icon;
+            <span className="text-[10px] text-slate-400">Tap card to inspect</span>
+          </div>
 
+          <div className="overflow-y-auto px-3 pb-3 space-y-2">
+            {filteredHazards.map(h => {
+              const catConfig = CATEGORIES.find(c => c.id === h.category) || CATEGORIES[1];
               return (
                 <div
                   key={h.id}
@@ -436,94 +570,36 @@ export default function HazardRadar() {
                       mapInstanceRef.current.flyTo([h.lat, h.lng], 15);
                     }
                   }}
-                  className="p-3 rounded-2xl bg-[#141C2B] border border-[#1E2B40] hover:border-[#10B981]/50 cursor-pointer transition-all active:scale-[0.99] flex flex-col gap-2"
+                  className="p-2.5 rounded-xl bg-[#141C2B] border border-[#1E2B40] flex items-center justify-between text-xs cursor-pointer"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2.5">
-                      {h.imageUrl ? (
-                        <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-[#1E2B40]">
-                          <img src={h.imageUrl} alt="Thumbnail" className="w-full h-full object-cover" />
-                        </div>
-                      ) : (
-                        <div 
-                          style={{ backgroundColor: `${catConfig.color}20`, borderColor: catConfig.color }}
-                          className="w-10 h-10 rounded-xl border flex items-center justify-center shrink-0"
-                        >
-                          <CatIcon size={18} style={{ color: catConfig.color }} />
-                        </div>
-                      )}
-
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span 
-                            style={{ color: catConfig.color }} 
-                            className="text-[11px] font-bold uppercase tracking-wider block"
-                          >
-                            {catConfig.label}
-                          </span>
-                          <span className="text-[10px] text-slate-500">• 2 min ago</span>
-                        </div>
-                        <h3 className="text-xs font-semibold text-slate-100 line-clamp-1">
-                          {h.locationName}
-                        </h3>
-                      </div>
-                    </div>
-
-                    <span className="text-[10px] text-slate-400 shrink-0 font-medium bg-[#1B2538] px-2 py-0.5 rounded-full">
-                      {calculateDistance(h.lat, h.lng)} away
+                  <div className="flex items-center gap-2">
+                    <span 
+                      style={{ color: catConfig.color }}
+                      className="font-bold uppercase text-[10px]"
+                    >
+                      {catConfig.label}
                     </span>
+                    <span className="text-slate-200 line-clamp-1">{h.locationName}</span>
                   </div>
-
-                  <p className="text-[11px] text-slate-300 line-clamp-2">
-                    {h.description}
-                  </p>
-
-                  <div className="flex items-center justify-between pt-1 border-t border-[#1E2B40]/50 text-[11px] text-slate-400">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-slate-300 font-medium">{h.author}</span>
-                      {h.verifiedAuthor && (
-                        <CheckCircle2 size={13} className="text-[#10B981]" />
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <button 
-                        onClick={(e) => handleUpvote(h.id, e)}
-                        className="flex items-center gap-1 text-slate-300 hover:text-[#10B981] transition-colors"
-                      >
-                        <ThumbsUp size={13} />
-                        <span>{h.upvotes}</span>
-                      </button>
-
-                      <div className="flex items-center gap-1 text-slate-400">
-                        <MessageSquare size={13} />
-                        <span>{h.comments?.length || 0}</span>
-                      </div>
-
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleShare(h);
-                        }}
-                        className="text-slate-400 hover:text-white"
-                      >
-                        <Share2 size={13} />
-                      </button>
-                    </div>
-                  </div>
+                  <span className="text-[10px] text-slate-400 shrink-0 font-medium">
+                    {calculateDistance(h.lat, h.lng)}
+                  </span>
                 </div>
               );
-            })
-          )}
+            })}
+          </div>
         </div>
+
       </div>
 
-      {/* DETAILED HAZARD BOTTOM SHEET MODAL (Mockup Screen 3 Match) */}
+      {/* ============================================================== */}
+      {/* DETAILED HAZARD INSPECTION MODAL (Responsive Centered Dialog) */}
+      {/* ============================================================== */}
       {selectedHazard && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-end justify-center p-0">
-          <div className="w-full max-w-md bg-[#111827] rounded-t-3xl border-t border-[#1E2B40] max-h-[85vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-200">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-full sm:max-w-lg bg-[#111827] rounded-t-3xl sm:rounded-3xl border border-[#1E2B40] max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in-50 zoom-in-95 duration-200 shadow-2xl">
             {/* Modal Header */}
-            <div className="p-3 border-b border-[#1E2B40] flex items-center justify-between">
+            <div className="p-4 border-b border-[#1E2B40] flex items-center justify-between bg-[#0E1522]">
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 uppercase">
                   {selectedHazard.category}
@@ -534,17 +610,17 @@ export default function HazardRadar() {
               </div>
               <button 
                 onClick={() => setSelectedHazard(null)}
-                className="p-1 rounded-full bg-[#1F2937] text-slate-300 hover:text-white"
+                className="p-1.5 rounded-full bg-[#1F2937] text-slate-300 hover:text-white"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Modal Content */}
-            <div className="p-4 overflow-y-auto space-y-4">
+            <div className="p-5 overflow-y-auto space-y-4">
               {/* Image banner */}
               {selectedHazard.imageUrl ? (
-                <div className="w-full h-44 rounded-2xl overflow-hidden border border-[#1E2B40]">
+                <div className="w-full h-48 rounded-2xl overflow-hidden border border-[#1E2B40]">
                   <img 
                     src={selectedHazard.imageUrl} 
                     alt="Hazard Evidence" 
@@ -562,25 +638,25 @@ export default function HazardRadar() {
                 <h2 className="text-base font-bold text-white">
                   {selectedHazard.locationName}
                 </h2>
-                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
                   {selectedHazard.description}
                 </p>
               </div>
 
               {/* Reporter Info */}
-              <div className="p-3 rounded-2xl bg-[#162032] border border-[#1E2B40] flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
+              <div className="p-3.5 rounded-2xl bg-[#162032] border border-[#1E2B40] flex items-center justify-between">
+                <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-[#10B981]/20 flex items-center justify-center text-[#10B981] font-bold text-xs">
                     {selectedHazard.author?.[0] || 'U'}
                   </div>
                   <div>
-                    <div className="flex items-center gap-1 text-xs font-semibold text-white">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-white">
                       <span>{selectedHazard.author}</span>
                       {selectedHazard.verifiedAuthor && (
                         <CheckCircle2 size={13} className="text-[#10B981]" />
                       )}
                     </div>
-                    <span className="text-[10px] text-slate-400">Verified Reporter</span>
+                    <span className="text-[10px] text-slate-400">Verified Community Reporter</span>
                   </div>
                 </div>
 
@@ -596,13 +672,14 @@ export default function HazardRadar() {
                   <button 
                     onClick={() => handleShare(selectedHazard)}
                     className="p-2 rounded-xl bg-[#1E2B40] text-slate-200 hover:text-white active:scale-95"
+                    title="Share Hazard Alert"
                   >
                     <Share2 size={15} />
                   </button>
                 </div>
               </div>
 
-              {/* View on Map Button (Screen 3 Mockup Match) */}
+              {/* View on Map Button */}
               <button
                 onClick={() => {
                   const lat = selectedHazard.lat;
@@ -612,13 +689,13 @@ export default function HazardRadar() {
                     mapInstanceRef.current.flyTo([lat, lng], 16, { duration: 0.8 });
                   }
                 }}
-                className="w-full py-3.5 rounded-2xl bg-[#10B981] hover:bg-[#059669] text-white font-bold text-sm shadow-xl shadow-emerald-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-2xl bg-[#10B981] hover:bg-[#059669] text-white font-bold text-xs shadow-xl shadow-emerald-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 <Eye size={16} />
-                <span>View on Map</span>
+                <span>Pan & Center on Map</span>
               </button>
 
-              {/* Community Comments / Recent Reports */}
+              {/* Community Comments */}
               <div className="space-y-2 pt-2 border-t border-[#1E2B40]">
                 <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
                   <MessageSquare size={14} className="text-[#10B981]" />
@@ -663,14 +740,16 @@ export default function HazardRadar() {
         </div>
       )}
 
-      {/* FILTER MODAL */}
+      {/* ============================================================== */}
+      {/* FILTER MODAL                                                   */}
+      {/* ============================================================== */}
       {showFilterModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-xs bg-[#111827] rounded-3xl border border-[#1E2B40] p-5 space-y-4 animate-in fade-in-50">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-[#111827] rounded-3xl border border-[#1E2B40] p-5 space-y-4 animate-in fade-in-50 zoom-in-95 shadow-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <Filter size={15} className="text-[#10B981]" />
-                <span>Filter Radar</span>
+                <span>Filter Radar Incidents</span>
               </h3>
               <button onClick={() => setShowFilterModal(false)} className="text-slate-400 hover:text-white">
                 <X size={18} />
@@ -735,27 +814,29 @@ export default function HazardRadar() {
         </div>
       )}
 
-      {/* REPORT HAZARD MODAL (SCREEN 4 IN USER MOCKUP) */}
+      {/* ============================================================== */}
+      {/* REPORT HAZARD MODAL                                            */}
+      {/* ============================================================== */}
       {isReporting && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-end justify-center p-0">
-          <div className="w-full max-w-md bg-[#111827] rounded-t-3xl border-t border-[#1E2B40] max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-200">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="w-full sm:max-w-md bg-[#111827] rounded-t-3xl sm:rounded-3xl border border-[#1E2B40] max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in-50 zoom-in-95 duration-200 shadow-2xl">
             {/* Header */}
-            <div className="p-4 border-b border-[#1E2B40] flex items-center justify-between">
+            <div className="p-4 border-b border-[#1E2B40] flex items-center justify-between bg-[#0E1522]">
               <div>
-                <h2 className="text-base font-bold text-white">Report Hazard</h2>
+                <h2 className="text-base font-bold text-white">Report Road Hazard</h2>
                 <p className="text-[11px] text-slate-400">Help fellow drivers stay safe on the road</p>
               </div>
               <button 
                 onClick={() => setIsReporting(false)}
-                className="p-1 rounded-full bg-[#1F2937] text-slate-300 hover:text-white"
+                className="p-1.5 rounded-full bg-[#1F2937] text-slate-300 hover:text-white"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmitReport} className="p-4 overflow-y-auto space-y-4">
-              {/* Category Grid (Matching Mockup 4) */}
+            <form onSubmit={handleSubmitReport} className="p-5 overflow-y-auto space-y-4">
+              {/* Category Grid */}
               <div>
                 <label className="text-xs font-semibold text-slate-300 block mb-2">
                   Select Hazard Type
@@ -872,7 +953,7 @@ export default function HazardRadar() {
                 type="submit"
                 className="w-full py-3.5 rounded-2xl bg-[#10B981] hover:bg-[#059669] text-white font-bold text-sm shadow-xl shadow-emerald-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
-                <span>Submit Report</span>
+                <span>Submit Report to Community</span>
               </button>
             </form>
           </div>

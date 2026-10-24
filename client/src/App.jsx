@@ -21,7 +21,7 @@ export default function App() {
         <Route 
           path="/radar" 
           element={
-            <MobileShell hideNav={true}>
+            <MobileShell fullBleed={true}>
               <HazardRadar />
             </MobileShell>
           } 
