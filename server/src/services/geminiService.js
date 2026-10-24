@@ -1,4 +1,4 @@
-import { geminiModel } from '../config/gemini.js';
+import { getGeminiModel, getFallbackModel } from '../config/gemini.js';
 import ChatMessage from '../models/ChatMessage.js';
 
 // System prompt defines the chatbot's personality and domain expertise
@@ -25,6 +25,27 @@ Response guidelines:
 `;
 
 /**
+ * Try generating with primary model, fallback to lite on rate limit
+ */
+async function sendWithFallback(model, userMessage, chatConfig) {
+  try {
+    const chatSession = model.startChat(chatConfig);
+    const result = await chatSession.sendMessage(userMessage);
+    return result.response.text();
+  } catch (error) {
+    // If rate limited on primary, try fallback model
+    if (error.status === 429 || error.message?.includes('429') || error.message?.includes('quota')) {
+      console.warn('Primary model rate-limited, trying fallback model...');
+      const fallback = getFallbackModel();
+      const chatSession = fallback.startChat(chatConfig);
+      const result = await chatSession.sendMessage(userMessage);
+      return result.response.text();
+    }
+    throw error;
+  }
+}
+
+/**
  * Multi-turn chat with conversation history
  */
 export const chat = async (userId, userMessage, sessionId) => {
@@ -40,19 +61,18 @@ export const chat = async (userId, userMessage, sessionId) => {
     parts: [{ text: msg.content }],
   }));
 
-  // 3. Start a Gemini chat session with history
-  const chatSession = geminiModel.startChat({
+  // 3. Chat config
+  const chatConfig = {
     history: formattedHistory,
     generationConfig: {
       maxOutputTokens: 500,
       temperature: 0.7,
     },
     systemInstruction: ROADSYNC_SYSTEM_PROMPT,
-  });
+  };
 
-  // 4. Send the user's message
-  const result = await chatSession.sendMessage(userMessage);
-  const aiResponse = result.response.text();
+  // 4. Send with automatic fallback
+  const aiResponse = await sendWithFallback(getGeminiModel(), userMessage, chatConfig);
 
   // 5. Save both messages to MongoDB
   await ChatMessage.insertMany([
@@ -82,10 +102,22 @@ export const analyzeEmission = async (vehicle, trip, co2Grams) => {
   `;
 
   try {
-    const result = await geminiModel.generateContent(prompt);
+    const result = await getGeminiModel().generateContent(prompt);
     return result.response.text();
   } catch (error) {
-    console.error('Gemini analyzeEmission error:', error.message);
+    // Try fallback model on rate limit
+    if (error.status === 429 || error.message?.includes('429') || error.message?.includes('quota')) {
+      try {
+        console.warn('Primary model rate-limited for emission analysis, trying fallback...');
+        const result = await getFallbackModel().generateContent(prompt);
+        return result.response.text();
+      } catch (fallbackError) {
+        console.error('Fallback model also failed:', fallbackError.message);
+      }
+    } else {
+      console.error('Gemini analyzeEmission error:', error.message);
+    }
     return 'Unable to generate AI analysis at this time. Keep tracking your emissions — every bit counts! 🌱';
   }
 };
+
